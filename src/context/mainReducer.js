@@ -1,6 +1,7 @@
 import socketIO from 'socket.io-client';
 
-const connectToSocket = () => socketIO.connect('http://localhost:4000/');
+const connectToSocket = () =>
+  socketIO.connect('https://monopoly-companion-server.vercel.app/');
 
 const initialState = {
   players: [],
