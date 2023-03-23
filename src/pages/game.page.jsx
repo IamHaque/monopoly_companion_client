@@ -190,7 +190,7 @@ function GamePage() {
 
       <Box px={4} py={4}>
         <Grid container spacing={2} columns={{ xs: 2, sm: 4, md: 8, lg: 12 }}>
-          {players
+          {player
             ? players.map((el, index) => (
                 <Grid item xs={2} sm={2} md={4} lg={4} key={index}>
                   <PlayerCard
