@@ -9,11 +9,11 @@ export const ContextProvider = ({ children }) => {
 
   const value = {
     user: state.user,
-    toast: state.toast,
     theme: state.theme,
     player: state.player,
     socket: state.socket,
     players: state.players,
+    history: state.history,
     createGame: (username, callback) => {
       dispatch({
         type: actions.CREATE_ROOM,
@@ -58,6 +58,9 @@ export const ContextProvider = ({ children }) => {
     paySalary: (playerId) => {
       dispatch({ type: actions.PAY_SALARY, payload: { playerId } });
     },
+    updateHistory: (history) => {
+      dispatch({ type: actions.UPDATE_HISTORY, payload: { history } });
+    },
     updatePlayers: (players) => {
       dispatch({ type: actions.UPDATE_PLAYERS, payload: { players } });
     },
@@ -76,11 +79,11 @@ export const ContextProvider = ({ children }) => {
     toggleTheme: () => {
       dispatch({ type: actions.TOGGLE_THEME });
     },
-    showToast: (message, severity) => {
-      dispatch({ type: actions.SHOW_TOAST, payload: { message, severity } });
+    setTheme: (theme) => {
+      dispatch({ type: actions.SET_THEME, payload: { theme } });
     },
-    hideToast: () => {
-      dispatch({ type: actions.HIDE_TOAST });
+    resetState: () => {
+      dispatch({ type: actions.RESET_STATE });
     },
   };
 

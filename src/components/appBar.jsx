@@ -1,58 +1,50 @@
-import { useContext, useState } from 'react';
+import { useState, useContext } from 'react';
 import {
   Box,
-  Menu,
   AppBar,
   Toolbar,
-  MenuItem,
   IconButton,
   Typography,
+  Skeleton,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 
-import MoreIcon from '@mui/icons-material/MoreVert';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import RestoreOutlinedIcon from '@mui/icons-material/RestoreOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 
 import { MainContext } from '../context/mainContext';
+import HistoryDialog from './history';
+
+const capitalize = (str) => {
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 function CustomAppBar({ logout, player }) {
-  const { theme, toggleTheme } = useContext(MainContext);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { enqueueSnackbar } = useSnackbar();
+  const { theme, history, toggleTheme } = useContext(MainContext);
 
-  const isMenuOpen = Boolean(anchorEl);
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const capitalize = (str) => {
-    return str
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSharing = async () => {
     if (!player) return;
 
     if (navigator.share) {
       const shareDetails = {
-        url: `http://localhost:5173/joinGame?gameId=${player?.roomId}`,
+        url: `https://monopoly.subhanhaque.uk/joinGame?gameId=${player?.roomId}`,
         title: 'Play Monopoly with me',
         text: `${capitalize(player?.name)} has invited you to play Monopoly.`,
       };
       try {
-        await navigator
-          .share(shareDetails)
-          .then(() =>
-            console.log('Hooray! Your content was shared to tha world')
-          );
+        await navigator.share(shareDetails).then(() => {
+          console.log('Hooray! Your content was shared to tha world');
+          enqueueSnackbar('Link shared');
+        });
       } catch (error) {
         console.log(`Oops! I couldn't share to the world because: ${error}`);
       }
@@ -61,41 +53,31 @@ function CustomAppBar({ logout, player }) {
     }
   };
 
-  const menuId = 'primary-search-account-menu';
-  const renderMenu = (
-    <Menu
-      anchorEl={anchorEl}
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      id={menuId}
-      keepMounted
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      open={isMenuOpen}
-      onClose={handleMenuClose}
-    >
-      <MenuItem
-        onClick={() => {
-          logout();
-          handleMenuClose();
-        }}
-      >
-        Exit Game
-      </MenuItem>
-    </Menu>
-  );
+  const handleThemeToggle = () => {
+    const currentTheme = theme === 'light' ? 'dark' : 'light';
+    window.localStorage.setItem('theme', currentTheme);
+    toggleTheme();
+  };
+
+  const showHistoryDialog = () => {
+    setShowHistory(true);
+  };
+
+  const closeHistoryDialog = () => {
+    setShowHistory(false);
+  };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Game #{player?.roomId}
-          </Typography>
+          {player ? (
+            <Typography variant="h6" noWrap component="div">
+              Game #{player?.roomId}
+            </Typography>
+          ) : (
+            <Skeleton variant="h6" animation="wave" width={132} />
+          )}
 
           {player && (
             <IconButton
@@ -111,33 +93,37 @@ function CustomAppBar({ logout, player }) {
           <Box sx={{ flexGrow: 1 }} />
 
           <Box>
-            <IconButton size="large" color="inherit" onClick={toggleTheme}>
+            <IconButton
+              size="large"
+              color="inherit"
+              onClick={showHistoryDialog}
+            >
+              <RestoreOutlinedIcon />
+            </IconButton>
+
+            <IconButton
+              size="large"
+              color="inherit"
+              onClick={handleThemeToggle}
+            >
               {theme === 'light' ? (
                 <DarkModeOutlinedIcon />
               ) : (
                 <LightModeOutlinedIcon />
               )}
             </IconButton>
-
             <IconButton size="large" color="inherit" onClick={logout}>
               <LogoutOutlinedIcon />
             </IconButton>
-
-            {/* <IconButton
-              edge="end"
-              size="large"
-              color="inherit"
-              aria-haspopup="true"
-              aria-controls={menuId}
-              onClick={handleProfileMenuOpen}
-            >
-              <MoreIcon />
-            </IconButton> */}
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* {renderMenu} */}
+      <HistoryDialog
+        history={history}
+        show={showHistory}
+        handleClose={closeHistoryDialog}
+      />
     </Box>
   );
 }

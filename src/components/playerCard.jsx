@@ -12,6 +12,7 @@ import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
 
 function PlayerCard({
   player,
+  actionsDisabled,
   handleModalOpen,
   currentPlayerId,
   payPlayerSalary,
@@ -51,7 +52,7 @@ function PlayerCard({
       <CardActions>
         <Button
           size="small"
-          disabled={currentPlayerId === player?.id}
+          disabled={currentPlayerId === player?.id || actionsDisabled}
           onClick={() => handleModalOpen(player?.id)}
         >
           Trade
@@ -61,6 +62,7 @@ function PlayerCard({
           <>
             <Button
               size="small"
+              disabled={actionsDisabled}
               onClick={() => handleModalOpen(player?.id, true)}
             >
               Trade As Bank
@@ -68,6 +70,7 @@ function PlayerCard({
 
             <Button
               size="small"
+              disabled={actionsDisabled}
               onClick={() => {
                 payPlayerSalary(player?.id);
               }}

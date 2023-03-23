@@ -1,12 +1,16 @@
-body {
-  margin: 0;
-  padding: 0;
+html {
+  height: fill-available;
+  height: -webkit-fill-available;
 }
 
-html,
 body,
 #root,
 .app {
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: fill-available;
+}
+
+body {
+  margin: 0;
+  padding: 0;
 }

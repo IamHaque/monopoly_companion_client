@@ -93,7 +93,7 @@ function JoinGamePage() {
 
   return (
     <Stack
-      minHeight="100vh"
+      flexGrow="1"
       direction="column"
       alignItems="center"
       justifyContent="center"
@@ -103,6 +103,7 @@ function JoinGamePage() {
       </Typography>
 
       <Input
+        width={'100'}
         error={gameId.error}
         value={gameId.value}
         setValue={setGameId}
@@ -110,6 +111,7 @@ function JoinGamePage() {
       />
 
       <Input
+        width={'100'}
         error={name.error}
         value={name.value}
         setValue={setName}

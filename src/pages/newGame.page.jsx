@@ -60,7 +60,7 @@ function NewGamePage() {
 
   return (
     <Stack
-      minHeight="100vh"
+      flexGrow="1"
       direction="column"
       alignItems="center"
       justifyContent="center"
@@ -70,6 +70,7 @@ function NewGamePage() {
       </Typography>
 
       <Input
+        width={'100'}
         error={name.error}
         value={name.value}
         setValue={setName}

@@ -1,20 +1,28 @@
 import { useContext, useEffect, useState } from 'react';
+import { useSnackbar } from 'notistack';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Alert, Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 
 import { MainContext } from '../context/mainContext';
 
 function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { rejoinGame } = useContext(MainContext);
+  const { enqueueSnackbar } = useSnackbar();
+  const { setTheme, rejoinGame } = useContext(MainContext);
 
-  const [alert, setAlert] = useState(null);
   const [activeRoom, setActiveRoom] = useState(null);
 
   useEffect(() => {
-    if (location?.state?.alert) setAlert(location?.state?.alert);
+    if (location?.state?.error) {
+      enqueueSnackbar('Game not longer exists', {
+        variant: 'error',
+      });
+    }
+
+    const localTheme = window.localStorage.getItem('theme');
+    if (localTheme) setTheme(localTheme);
 
     let localPlayerData = window.localStorage.getItem('playerData');
     if (!localPlayerData) return;
@@ -25,24 +33,15 @@ function HomePage() {
     setActiveRoom({ id, name, roomId });
   }, []);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setAlert(null);
-    }, 3000);
-  }, [alert]);
-
   const handleRejoin = () => {
     if (!activeRoom) return;
 
     const callback = (error) => {
       if (!error) return;
 
-      window.localStorage.clear();
+      window.localStorage.setItem('playerData', JSON.stringify({}));
       setActiveRoom(null);
-
-      return navigate('/', {
-        state: { alert: { message: error.message, severity: 'error' } },
-      });
+      return navigate('/', { state: { error: true } });
     };
 
     rejoinGame(activeRoom?.roomId, activeRoom?.name, activeRoom?.id, callback);
@@ -51,21 +50,22 @@ function HomePage() {
 
   return (
     <Stack
-      minHeight="100vh"
+      flexGrow="1"
+      maxWidth="sm"
       direction="column"
       alignItems="center"
       justifyContent="center"
     >
-      <Typography variant="h4" mb={2}>
+      <Typography variant="h4" mb={2} textAlign="center">
         Monopoly Companion
       </Typography>
 
-      <Typography mb={5} maxWidth="sm" textAlign="center">
+      <Typography mb={5} px={5} textAlign="center">
         An easy way to manage finances in your game of monopoly from the
         browser.
       </Typography>
 
-      <Stack gap={2} direction="row">
+      <Stack gap={2} direction="row" flexWrap="wrap" justifyContent="center">
         <Button variant="contained" component={Link} to="/newGame">
           New Game
         </Button>
@@ -75,12 +75,6 @@ function HomePage() {
         </Button>
       </Stack>
 
-      {alert && (
-        <Alert sx={{ mt: 5 }} severity={alert?.severity}>
-          {alert?.message || 'Alert'}
-        </Alert>
-      )}
-
       {activeRoom && (
         <Stack
           p={2}
@@ -88,7 +82,8 @@ function HomePage() {
           gap={1}
           boxShadow={2}
           direction="row"
-          minWidth="min(50%, 300px)"
+          alignItems="center"
+          minWidth="min(50%, 320px)"
           bgcolor="background.paper"
           justifyContent="space-between"
         >
@@ -97,7 +92,9 @@ function HomePage() {
               {activeRoom?.name}
             </Typography>
 
-            <Typography>Room #{activeRoom?.roomId}</Typography>
+            <Typography fontSize={'small'}>
+              Room #{activeRoom?.roomId}
+            </Typography>
           </Box>
 
           <Button size="large" onClick={handleRejoin}>

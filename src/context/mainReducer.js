@@ -1,19 +1,15 @@
 import socketIO from 'socket.io-client';
 
 const connectToSocket = () =>
-  socketIO.connect('https://monopoly-companion-server.vercel.app/');
+  socketIO.connect('https://monopoly-server.subhanhaque.uk');
 
 const initialState = {
   players: [],
+  history: [],
   player: null,
   socket: null,
   theme: 'light',
   salaryAmount: 200,
-  toast: {
-    show: false,
-    message: null,
-    severity: null,
-  },
 };
 
 const actions = {
@@ -29,9 +25,11 @@ const actions = {
   PAY_SALARY: 'PAY_SALARY',
   PLAYER_UPDATE_BALANCE: 'PLAYER_UPDATE_BALANCE',
 
-  SHOW_TOAST: 'SHOW_TOAST',
-  HIDE_TOAST: 'HIDE_TOAST',
+  SET_THEME: 'SET_THEME',
   TOGGLE_THEME: 'TOGGLE_THEME',
+
+  RESET_STATE: 'RESET_STATE',
+  UPDATE_HISTORY: 'UPDATE_HISTORY',
 };
 
 const mainReducer = (state, action) => {
@@ -72,7 +70,11 @@ const mainReducer = (state, action) => {
       state.socket.emit('exit_room', state.player?.id);
       state.socket.disconnect();
     }
-    return { ...state, socket: null, user: null };
+    return { ...state, socket: null, player: null, players: [], history: [] };
+  }
+
+  if (action.type === actions.RESET_STATE) {
+    return { ...state, socket: null, player: null, players: [], history: [] };
   }
 
   if (action.type === actions.INIT_PLAYER) {
@@ -125,29 +127,18 @@ const mainReducer = (state, action) => {
     return { ...state };
   }
 
+  if (action.type === actions.SET_THEME) {
+    return { ...state, theme: action.payload.theme };
+  }
+
   if (action.type === actions.TOGGLE_THEME) {
     return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
   }
 
-  if (action.type === actions.SHOW_TOAST) {
+  if (action.type === actions.UPDATE_HISTORY) {
     return {
       ...state,
-      toast: {
-        show: true,
-        message: action.payload.message,
-        severity: action.payload.severity,
-      },
-    };
-  }
-
-  if (action.type === actions.HIDE_TOAST) {
-    return {
-      ...state,
-      toast: {
-        show: false,
-        message: null,
-        severity: null,
-      },
+      history: [...action.payload.history],
     };
   }
 

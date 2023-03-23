@@ -1,12 +1,21 @@
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Stack, Typography, Skeleton } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
 
 import { MainContext } from '../context/mainContext';
 import PlayerCard from '../components/playerCard';
 import TradeModal from '../components/tradeModal';
 import CustomAppBar from '../components/appBar';
 import AlertDialog from '../components/dialog';
+
+const capitalize = (str) => {
+  if (typeof str !== 'string') return '';
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 function GamePage() {
   const {
@@ -15,6 +24,8 @@ function GamePage() {
     players,
     exitGame,
     paySalary,
+    resetState,
+    updateHistory,
     updatePlayers,
     initializePlayer,
     updatePlayerStatus,
@@ -22,6 +33,7 @@ function GamePage() {
   } = useContext(MainContext);
 
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [dialog, setDialog] = useState({
     title: '',
@@ -39,6 +51,8 @@ function GamePage() {
     fromBank: false,
   });
 
+  const [canTrade, setCanTrade] = useState(true);
+
   useEffect(() => {
     if (!socket) {
       navigate('/');
@@ -55,16 +69,38 @@ function GamePage() {
       );
     });
 
-    socket.on('trade_request', (tradeInfo, callback) => {
-      handleDialogOpen(tradeInfo, callback);
+    socket.on('trade_request', (tradeInfo) => {
+      handleDialogOpen(tradeInfo);
     });
 
-    socket.on('update_player_data', ({ players }) => {
+    socket.on('update_player_data', ({ history, players }) => {
       updatePlayers(players);
+      updateHistory(history);
     });
 
     socket.on('disconnect', () => {
       console.log('disconnected');
+      resetState();
+    });
+
+    socket.on('log_action', ({ message, type }) => {
+      const options = { variant: type };
+      if (message.includes('joined') || message.includes('left')) {
+        options.preventDuplicate = true;
+      }
+      enqueueSnackbar(`${message}`, options);
+    });
+
+    socket.on('disable_trade', () => {
+      setCanTrade(false);
+    });
+
+    socket.on('enable_trade', () => {
+      setCanTrade(true);
+      setDialog({
+        ...dialog,
+        show: false,
+      });
     });
 
     // Tab has focus
@@ -90,9 +126,10 @@ function GamePage() {
   }, []);
 
   const handleLogout = () => {
-    window.localStorage.clear();
-    navigate('/');
+    window.localStorage.setItem('playerData', JSON.stringify({}));
+    enqueueSnackbar('Left game room');
     exitGame();
+    navigate('/');
   };
 
   const handleModalOpen = (playerId, fromBank = false) => {
@@ -115,13 +152,6 @@ function GamePage() {
   };
 
   const handleDialogOpen = (data) => {
-    const capitalize = (str) => {
-      return str
-        .split(' ')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    };
-
     const requestedAmount = Math.abs(data.balance);
     const requestedBy = capitalize(data.requestedBy);
     let message =
@@ -147,6 +177,7 @@ function GamePage() {
     });
 
     if (!socket) return;
+
     socket.emit('trade_response', {
       ...data,
       action,
@@ -154,22 +185,29 @@ function GamePage() {
   };
 
   return (
-    <>
+    <Stack flexGrow="1" width="100%">
       <CustomAppBar player={player} logout={handleLogout} />
 
       <Box px={4} py={4}>
         <Grid container spacing={2} columns={{ xs: 2, sm: 4, md: 8, lg: 12 }}>
-          {players.map((el, index) => (
-            <Grid item xs={2} sm={2} md={4} lg={4} key={index}>
-              <PlayerCard
-                player={el}
-                payPlayerSalary={paySalary}
-                currentPlayerId={player?.id}
-                handleModalOpen={handleModalOpen}
-                loggedInAsBanker={player?.isBanker === true}
-              />
-            </Grid>
-          ))}
+          {players
+            ? players.map((el, index) => (
+                <Grid item xs={2} sm={2} md={4} lg={4} key={index}>
+                  <PlayerCard
+                    player={el}
+                    actionsDisabled={!canTrade}
+                    payPlayerSalary={paySalary}
+                    currentPlayerId={player?.id}
+                    handleModalOpen={handleModalOpen}
+                    loggedInAsBanker={player?.isBanker === true}
+                  />
+                </Grid>
+              ))
+            : [1, 1, 1, 1].map((_, index) => (
+                <Grid item xs={2} sm={2} md={4} lg={4} key={index}>
+                  <Skeleton variant="rounded" animation="wave" height={195} />
+                </Grid>
+              ))}
         </Grid>
       </Box>
 
@@ -180,7 +218,7 @@ function GamePage() {
         onClose={handleModalClose}
         handlePlayerBalanceUpdate={updatePlayerBalance}
       />
-    </>
+    </Stack>
   );
 }
 
