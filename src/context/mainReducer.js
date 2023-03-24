@@ -1,10 +1,10 @@
 import { io } from 'socket.io-client';
 
-const DEV_URL = 'http://localhost:4000';
-const PROD_URL = 'https://monopoly-server.subhanhaque.uk';
+const DEV_URL = 'http://localhost:4000/monopoly';
+const PROD_URL = 'https://monopoly-server.subhanhaque.uk/monopoly';
 
 const connectToSocket = () =>
-  io(PROD_URL, {
+  io(DEV_URL, {
     transports: ['websocket'],
   });
 
