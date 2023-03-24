@@ -1,15 +1,3 @@
-html {
-  height: fill-available;
-  height: -webkit-fill-available;
-}
-
-body,
-#root,
-.app {
-  min-height: 100vh;
-  min-height: fill-available;
-}
-
 body {
   margin: 0;
   padding: 0;

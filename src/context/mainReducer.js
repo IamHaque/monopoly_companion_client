@@ -1,7 +1,12 @@
-import socketIO from 'socket.io-client';
+import { io } from 'socket.io-client';
+
+const DEV_URL = 'http://localhost:4000';
+const PROD_URL = 'https://monopoly-server.subhanhaque.uk';
 
 const connectToSocket = () =>
-  socketIO.connect('https://monopoly-server.subhanhaque.uk');
+  io(PROD_URL, {
+    transports: ['websocket'],
+  });
 
 const initialState = {
   players: [],
@@ -40,6 +45,7 @@ const mainReducer = (state, action) => {
   ) {
     if (state.socket) state.socket.disconnect();
     const socket = connectToSocket();
+    if (!socket) return;
 
     let event = 'create_room';
     const options = {

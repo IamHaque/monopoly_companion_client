@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';

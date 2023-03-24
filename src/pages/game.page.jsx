@@ -1,4 +1,4 @@
-import { Box, Grid, Stack, Typography, Skeleton } from '@mui/material';
+import { Box, Grid, Stack, Skeleton } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -54,12 +54,13 @@ function GamePage() {
   const [canTrade, setCanTrade] = useState(true);
 
   useEffect(() => {
-    if (!socket) {
-      navigate('/');
-      return;
-    }
+    if (!socket) navigate('/');
+  }, [player]);
 
-    socket.on('joined_room', (player) => {
+  useEffect(() => {
+    if (!socket) return;
+
+    function onPlayerJoin(player) {
       initializePlayer(player);
 
       const { id, name, roomId } = player;
@@ -67,41 +68,53 @@ function GamePage() {
         'playerData',
         JSON.stringify({ id, name, roomId })
       );
-    });
+    }
 
-    socket.on('trade_request', (tradeInfo) => {
-      handleDialogOpen(tradeInfo);
-    });
-
-    socket.on('update_player_data', ({ history, players }) => {
+    function onDataUpdate({ history, players }) {
       updatePlayers(players);
       updateHistory(history);
-    });
+    }
 
-    socket.on('disconnect', () => {
-      console.log('disconnected');
-      resetState();
-    });
-
-    socket.on('log_action', ({ message, type }) => {
+    function onActionLog({ message, type }) {
       const options = { variant: type };
       if (message.includes('joined') || message.includes('left')) {
         options.preventDuplicate = true;
       }
       enqueueSnackbar(`${message}`, options);
-    });
+    }
 
-    socket.on('disable_trade', () => {
+    function onAlert({ message, type }) {
+      enqueueSnackbar(`${message}`, { variant: type });
+    }
+
+    function onTradeRequest(tradeInfo) {
+      handleDialogOpen(tradeInfo);
+    }
+
+    function onDisableTrade() {
       setCanTrade(false);
-    });
+    }
 
-    socket.on('enable_trade', () => {
+    function onEnableTrade() {
       setCanTrade(true);
       setDialog({
         ...dialog,
         show: false,
       });
-    });
+    }
+
+    function onDisconnect() {
+      resetState();
+    }
+
+    socket.on('joined_room', onPlayerJoin);
+    socket.on('update_player_data', onDataUpdate);
+    socket.on('trade_request', onTradeRequest);
+    socket.on('disable_trade', onDisableTrade);
+    socket.on('enable_trade', onEnableTrade);
+    socket.on('alert', onAlert);
+    socket.on('log_action', onActionLog);
+    socket.on('disconnect', onDisconnect);
 
     // Tab has focus
     const handleFocus = async () => {
@@ -122,6 +135,15 @@ function GamePage() {
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('blur', handleBlur);
+
+      socket.off('joined_room', onPlayerJoin);
+      socket.off('update_player_data', onDataUpdate);
+      socket.off('trade_request', onTradeRequest);
+      socket.off('disable_trade', onDisableTrade);
+      socket.off('enable_trade', onEnableTrade);
+      socket.off('alert', onAlert);
+      socket.off('log_action', onActionLog);
+      socket.off('disconnect', onDisconnect);
     };
   }, []);
 
